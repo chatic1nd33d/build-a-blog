@@ -18,33 +18,46 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
-class Art(db.Model):
+class Blogpost(db.Model):
     title = db.StringProperty(required = True)
-    art = db.TextProperty(required = True)
+    blogpost = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
 
-class MainPage(Handler):
-    def render_front(self, title="", art="", error=""):
-        arts = db.GqlQuery("SELECT * FROM Art ORDER BY created DESC")
-
-        self.render("front.html", title=title, art=art, error=error, arts=arts)
+class NewPost(Handler):
+    def render_front(self, title="", blogpost="", error=""):
+        self.render("front.html", title=title, blogpost=blogpost, error=error)
 
     def get(self):
         self.render_front()
 
     def post(self):
         title = self.request.get("title")
-        art = self.request.get("art")
+        blogpost = self.request.get("blogpost")
 
-        if title and art:
-            a = Art(title=title, art=art)
+        if title and blogpost:
+            a = Blogpost(title=title, blogpost=blogpost)
             a.put()
 
             self.redirect("/")
         else:
-            error = "we need both a title and some artwork!"
-            self.render_front(title, art, error)
+            error = "we need both a title and some content in the body of your blogpost!"
+            self.render_front(title, blogpost, error)
+
+class Recent5(Handler):
+    def render_recent5(self, title="", blogpost="", error=""):
+        blogposts = db.GqlQuery("SELECT * FROM Blogpost ORDER BY created DESC LIMIT 5")
+
+        self.render("recent5.html", title=title, blogpost=blogpost, blogposts=blogposts)
+
+    def get(self):
+        self.render_recent5()
+
+class ViewPostHandler(Handler):
+    def get(self, id):
+        self.write(id)
 
 app = webapp2.WSGIApplication([
-    ('/', MainPage)
+    ('/', NewPost),
+    ('/recent5', Recent5),
+    (webapp2.Route('/blog/<id:\d+>', ViewPostHandler))
 ], debug=True)
