@@ -24,11 +24,11 @@ class Blogpost(db.Model):
     created = db.DateTimeProperty(auto_now_add = True)
 
 class NewPost(Handler):
-    def render_front(self, title="", blogpost="", error=""):
-        self.render("front.html", title=title, blogpost=blogpost, error=error)
+    def render_NewPost(self, title="", blogpost="", error=""):
+        self.render("newpost.html", title=title, blogpost=blogpost, error=error)
 
     def get(self):
-        self.render_front()
+        self.render_NewPost()
 
     def post(self):
         title = self.request.get("title")
@@ -37,27 +37,43 @@ class NewPost(Handler):
         if title and blogpost:
             a = Blogpost(title=title, blogpost=blogpost)
             a.put()
-
-            self.redirect("/")
+            id = Blogpost.key().id()
+            self.redirect("/blog/'%s'"%sid)
         else:
-            error = "we need both a title and some content in the body of your blogpost!"
-            self.render_front(title, blogpost, error)
+            error = "We need both a title and some content in the body of your blogpost!"
+            self.render_NewPost(title, blogpost, error)
 
 class Recent5(Handler):
-    def render_recent5(self, title="", blogpost="", error=""):
+    def render_blogposts(self, title="", blogpost="", error=""):
         blogposts = db.GqlQuery("SELECT * FROM Blogpost ORDER BY created DESC LIMIT 5")
 
-        self.render("recent5.html", title=title, blogpost=blogpost, blogposts=blogposts)
+        self.render("blogposts.html", title=title, blogpost=blogpost, blogposts=blogposts)
 
     def get(self):
-        self.render_recent5()
+        self.render_blogposts()
 
 class ViewPostHandler(Handler):
-    def get(self, id):
-        self.write(id)
+    def get(self, id, title="", blogpost=""):
+        blogposts = Blogpost.get_by_id(int(id), parent=None)
+        if blogposts:
+            self.render("blogposts.html", title=title, blogpost=blogpost, id=id, blogposts=blogposts)
+        else:
+            self.write("There is no blogpost with that ID.")
+
+
+class FrontPage(Handler):
+    def render_blogposts(self, title="", blogpost="", error="", id = ""):
+        blogposts = db.GqlQuery("SELECT * FROM Blogpost ORDER BY created DESC")
+        # id = Blogpost.key().id()
+
+        self.render("blogposts.html", title=title, blogpost=blogpost, blogposts=blogposts)
+
+    def get(self):
+        self.render_blogposts()
 
 app = webapp2.WSGIApplication([
-    ('/', NewPost),
-    ('/recent5', Recent5),
+    ('/', FrontPage),
+    ('/newpost', NewPost),
+    ('/blog', Recent5),
     (webapp2.Route('/blog/<id:\d+>', ViewPostHandler))
 ], debug=True)

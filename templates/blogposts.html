@@ -2,8 +2,11 @@
 
 {% block content %}
       {% for blogpost in blogposts %}
+        <a href="localhost:10080/blog/{{id}}">
+          <div class="blogpost-title">{{blogpost.title}}
+          </div>
+        </a>
         <div class="blogpost">
-          <div class="blogpost-title">{{blogpost.title}}</div>
           <pre class="blogpost-body">{{blogpost.blogpost}}</pre>
         </div>
       {% endfor %}
