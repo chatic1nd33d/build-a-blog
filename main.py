@@ -37,8 +37,8 @@ class NewPost(Handler):
         if title and blogpost:
             a = Blogpost(title=title, blogpost=blogpost)
             a.put()
-            id = Blogpost.key().id()
-            self.redirect("/blog/'%s'"%sid)
+            a_id = a.key().id()
+            self.redirect('/blog/'+str(a_id))
         else:
             error = "We need both a title and some content in the body of your blogpost!"
             self.render_NewPost(title, blogpost, error)
@@ -53,18 +53,17 @@ class Recent5(Handler):
         self.render_blogposts()
 
 class ViewPostHandler(Handler):
-    def get(self, id, title="", blogpost=""):
-        blogposts = Blogpost.get_by_id(int(id), parent=None)
-        if blogposts:
-            self.render("blogposts.html", title=title, blogpost=blogpost, id=id, blogposts=blogposts)
-        else:
-            self.write("There is no blogpost with that ID.")
+    def render_Blogpost(self, blogpost):
+        self.render("blogpost.html", blogpost=blogpost)
+
+    def get(self, id):
+        blogpost = Blogpost.get_by_id(int(id))
+        self.render_Blogpost(blogpost)
 
 
 class FrontPage(Handler):
     def render_blogposts(self, title="", blogpost="", error="", id = ""):
         blogposts = db.GqlQuery("SELECT * FROM Blogpost ORDER BY created DESC")
-        # id = Blogpost.key().id()
 
         self.render("blogposts.html", title=title, blogpost=blogpost, blogposts=blogposts)
 
